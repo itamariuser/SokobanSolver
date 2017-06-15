@@ -1,11 +1,11 @@
 package data;
 
-import java.util.Queue;
+import java.util.PriorityQueue;
 
 public interface Searchable<T> {
 	State<T> getInitialState();
 	State<T> getGoalState();
-	Queue<State<T>> getAllPossibleStates(State<T> s);
+	PriorityQueue<State<T>> getAllPossibleStates(State<T> s);
 	//int getCostBetween(State<T> src, State<T> dest);
 	//Action<T> getActionBetween(State<T> src, State<T> dest);
 }

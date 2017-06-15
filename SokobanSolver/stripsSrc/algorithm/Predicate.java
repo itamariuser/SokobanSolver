@@ -4,7 +4,7 @@ public abstract class Predicate<T> {
 	
 	T data;
 	protected String name;
-	Plannable<T> plannable;
+	
 
 	public String getName() {
 		return name;
@@ -39,5 +39,15 @@ public abstract class Predicate<T> {
 	@Override
 	public String toString() {
 		return "Type: "+this.getClass().getSimpleName()+"\nName: "+this.name+"\nData: "+data.toString();
+	}
+	@Override
+	public boolean equals(Object obj) {
+		if(obj instanceof Predicate)
+		{
+			@SuppressWarnings("unchecked")
+			Predicate<T> pred=(Predicate<T>) obj;
+			return (this.data.equals(pred.data) && this.name.equals(pred.name));
+		}
+		return false;
 	}
 }

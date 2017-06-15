@@ -37,8 +37,16 @@ public class AndPredicate<T> extends ComplexPredicate<T> {
 		return "** 'And' PREDICATE, Name: "+this.name+", preds:"+sb.toString();
 	}
 	
-	public void update(AndPredicate<T> effects) {
-		effects.getComponents().forEach((Predicate<T> p)->components.removeIf((Predicate<T> pr)->plannable.contradicts(p,pr)));
+	public void update(AndPredicate<T> effects,Plannable<T> plannable) {
+		//effects.getComponents().forEach((Predicate<T> p)->components.removeIf((Predicate<T> pr)->plannable.contradicts(p,pr)));
+		ArrayList<Predicate<T>> toRemove= new ArrayList<>();
+		for (Predicate<T> predicate : effects.getComponents()) {
+			for (Predicate<T> pr : components) {
+				if(plannable.contradicts(predicate, pr)) toRemove.add(pr);
+			}
+		}
+		components.removeAll(toRemove);
 		components.addAll(effects.getComponents());
+		System.out.println();
 	}
 }

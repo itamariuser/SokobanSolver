@@ -28,7 +28,7 @@ public class ComplexPredicate<T> extends Predicate<T> {
 		return "** COMPLEX PREDICATE, Name: " + this.name + ", preds:" + sb.toString();
 	}
 
-	public void update(AndPredicate<T> effects) {
+	public void update(AndPredicate<T> effects,Plannable<T> plannable) {
 		effects.getComponents().forEach((Predicate<T> p)->components.removeIf((Predicate<T> pr)->plannable.contradicts(p,pr)));
 		components.addAll(effects.getComponents());
 		

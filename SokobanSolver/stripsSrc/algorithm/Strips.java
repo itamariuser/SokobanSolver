@@ -1,8 +1,9 @@
 package algorithm;
 
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Stack;
+
+import gameObjects.Position2D;
 
 public class Strips<T> implements Planner<T> {
 	@Override
@@ -13,14 +14,15 @@ public class Strips<T> implements Planner<T> {
 		
 		while(!stack.isEmpty())
 		{
-			System.out.println(stack);
 			Predicate<T> top=stack.peek();
-			if(!(top instanceof Action))
+			System.out.println(stack);
+			if(top == null)
+				stack.pop();
+			else if(!(top instanceof Action) || !(top instanceof LinkAction) )
 			{
-				//System.out.println(!plannable.getKnowledgebase().satisfies(top));
-				
 				if(!plannable.satisfies(plannable.getKnowledgebase(), top))
 				{
+					Action<T> action=null;
 					if(top instanceof AndPredicate)//if complex then unpack components to stack
 					{
 						//TODO: add a way to decide order of insertion (comparator)
@@ -29,14 +31,27 @@ public class Strips<T> implements Planner<T> {
 							stack.push(predicate);
 						}
 					}
+					
 					else if(top instanceof SimplePredicate)//
 					{
 						stack.pop();
-						Action<T> action=plannable.getSatisfyingAction(top);//Change to a set of actions
-						//TODO: 
+						action=plannable.getSatisfyingAction(top);//Change to a set of actions
+						if(action instanceof LinkAction)
+						{
+							LinkAction<T> linkAc = (LinkAction<T>)action;
+							AndPredicate<T> precon = new AndPredicate<T>(((Action<T>)linkAc.getActions().getFirst()).getPreconditions());
+							AndPredicate<T> effects = new AndPredicate<T>(((Action<T>)linkAc.getActions().getFirst()).getEffects());
+							Action<T> newAc = new Action<T>("Move_MainCharacter_To", precon, effects);
+							LinkAction<T> link=(LinkAction<T>)action;
+							stack.push(newAc);
+							}
+						}
+					else
+					{
 						stack.push(action);
-						stack.push(action.getPreconditions());
 					}
+					stack.push(action.getPreconditions());
+				}
 				}
 				else//satisfied
 				{
@@ -47,10 +62,11 @@ public class Strips<T> implements Planner<T> {
 			{
 				stack.pop();//remove from top
 				Action<T> a=(Action<T>) top;
-				plannable.getKnowledgebase().update(a.getEffects());
+				plannable.getKnowledgebase().update(a.getEffects(),plannable);//simulate execution
 				actionsToDo.add(a);
 			}
 		}
+		//System.out.println(actionsToDo);
 		return new Plan<T>(actionsToDo);
 	}
 

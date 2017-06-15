@@ -4,6 +4,9 @@ public class State<T> {
 	private T layout;
 	private int costFromParent;
 	private State<T> cameFromState;
+	
+	
+	
 	public T getLayout() {
 		return layout;
 	}
@@ -34,8 +37,10 @@ public class State<T> {
 	}
 	public State() {
 		this.cameFromState=null;
+		this.costFromParent=1;
 	}
 	
+
 	public boolean equals(State<T> s) {
 		return layout.equals(s.layout);
 	}
@@ -43,4 +48,7 @@ public class State<T> {
 	public String toString() {
 		return layout.toString();
 	}
+
+
+	
 }
