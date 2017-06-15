@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.PriorityQueue;
 
+import gameObjects.Position2D;
+
 public class BestFirstSearcher<T> extends CommonSearcher<T> {
 	
 	private HashSet<State<T>> closed;
@@ -19,6 +21,14 @@ public class BestFirstSearcher<T> extends CommonSearcher<T> {
 		 openList=new PriorityQueue<>(new Comparator<State<T>>() {
 			@Override
 			public int compare(State<T> arg0, State<T> arg1) {
+				if(getEqualData(distances, arg0)==null)
+				{
+					System.out.println();
+				}
+				if(distances.get(arg1)==null)
+				{
+					System.out.println();
+				}
 				return distances.get(arg0)-distances.get(arg1);
 			}
 		});
@@ -35,7 +45,7 @@ public class BestFirstSearcher<T> extends CommonSearcher<T> {
 	private Integer getEqualData(HashMap<State<T>,Integer> map,State<T> state)
 	{
 		for (State<T> s1 : map.keySet()) {
-			if(state.getLayout().equals(s1.getLayout())){
+			if(s1.getLayout().equals(state.getLayout())){
 				return map.get(state);
 			}
 		}
@@ -45,6 +55,10 @@ public class BestFirstSearcher<T> extends CommonSearcher<T> {
 	
 	private State<T> getEqualDataS(HashMap<State<T>,State<T>> map,State<T> state)
 	{
+		if(state.getLayout().equals(new Position2D(1,3)))
+		{
+			System.out.println();
+		}
 		for (State<T> s1 : map.keySet()) {
 			if(state.getLayout().equals(s1.getLayout())){
 				return map.get(state);

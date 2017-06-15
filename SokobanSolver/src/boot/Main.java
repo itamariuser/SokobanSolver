@@ -20,15 +20,20 @@ public class Main {
 		Plan<Position2D> plan=null;
 		try{
 			Strips<Position2D> strips=new Strips<>();
-			plan=strips.plan(new SokobanSolver(loader.loadLevelFromStream(new FileInputStream("C:/Users/shefferit/Desktop/level1")), new BestFirstSearcher<>()));
+			plan=strips.plan(new SokobanSolver(loader.loadLevelFromStream(new FileInputStream(args[0])), new BestFirstSearcher<>()));
 		}catch(Exception e)
 		{
 			e.printStackTrace();
 		}
 		String direction="";
-		PrintWriter fus=new PrintWriter(new File("C:/Users/shefferit/Desktop/solution1"));
+		PrintWriter fus=new PrintWriter(new File(args[1]));
 		for (Action<Position2D> act : plan.getActions()) {
-			
+			if(act.getName().startsWith("Move_MainCharacter_In_Direction"))
+			{
+				for (String string : act.getSub()) {
+					fus.println(string);
+				}
+			}
 			if(act.getName().equals("Move_Crate_To"))
 			{
 				//String name=act.getEffects().getComponents().get(0).getName();

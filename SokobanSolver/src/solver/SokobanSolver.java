@@ -3,13 +3,11 @@ package solver;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.PriorityQueue;
 
 import algorithm.Action;
 import algorithm.AndPredicate;
-import algorithm.LinkAction;
 import algorithm.Plannable;
 import algorithm.Predicate;
 import algorithm.SimplePredicate;
@@ -44,7 +42,7 @@ public class SokobanSolver implements Plannable<Position2D> {//Generates a new s
 			if(g instanceof GoalPoint) 
 				level.getPositionsOfObject(g).forEach((p)->pToReturn.add(new SimplePredicate<Position2D>("Crate_At",p)));});
 		goal = pToReturn;
-		
+		//WE DIDNT CHECK IF OUT OF BOUNDS
 		this.searcher=s;
 	}
 	
@@ -107,6 +105,11 @@ public class SokobanSolver implements Plannable<Position2D> {//Generates a new s
 	@Override
 	public boolean contradicts(Predicate<Position2D> p1, Predicate<Position2D> p2) {//p1 => ~p2
 		String name1 = p1.getName();
+		
+		if(p2==null)
+		{
+			System.out.println();
+		}
 		String name2 = p2.getName();
 		
 		if(p1 instanceof SimplePredicate)
@@ -224,12 +227,12 @@ public class SokobanSolver implements Plannable<Position2D> {//Generates a new s
 	@SuppressWarnings("unchecked")
 	@Override
 	public List<Action<Position2D>> getSatisfyingActions(Predicate<Position2D> top) {
-		int x=top.getData().getX();
+ 		int x=top.getData().getX();
 		int y=top.getData().getY();
 		
 		if(top.getName().startsWith("Crate_At"))// change to fit class CratePredicate<Position>
 		{
-			if(satisfies(kb,top))
+			if(satisfies(kb,top))//
 			{
 				ArrayList<Action<Position2D>> listu=new ArrayList<>();
 				ArrayList<Predicate<Position2D>> z=new ArrayList<Predicate<Position2D>>();
@@ -250,7 +253,7 @@ public class SokobanSolver implements Plannable<Position2D> {//Generates a new s
 			
 			if(contradicts(kb,wallAtNextPos))//check if no wall at nextPos
 			{
-				if(!satisfies(kb, crateAtPosition))
+				if(!satisfies(kb, crateAtPosition))//it THE FCKING GOAL
 				{
 					SimplePredicate<Position2D> playerNewPos=new SimplePredicate<Position2D>("MainCharacter_At");
 					SimplePredicate<Position2D> CrateIsAtPosition=new SimplePredicate<Position2D>("Crate_At",null);//crate is at position to be pushed
@@ -317,6 +320,7 @@ public class SokobanSolver implements Plannable<Position2D> {//Generates a new s
 		}
 		if(top.getName().startsWith("MainCharacter")){
 			for (Predicate<Position2D> p : kb.getComponents()) {
+				
 				if(p.getName().startsWith("MainCharacter_At")){
 					Searchable<Position2D> searchable=new Searchable<Position2D>() {
 						
@@ -381,45 +385,98 @@ public class SokobanSolver implements Plannable<Position2D> {//Generates a new s
 					} catch (GoalNotFoundException e) {
 						e.getMessage();
 					}
+					
+					
+//					LinkAction<Position2D> linkAction=new LinkAction<>("");
+//					
+//					for (State<Position2D> s : solution.getPathToVictory()) {
+//						AndPredicate<Position2D> preconditions=null;
+//						AndPredicate<Position2D> effects=new AndPredicate<>();
+//						ArrayList<Predicate<Position2D>> precList=new ArrayList<>();
+//						ArrayList<Predicate<Position2D>> effList=new ArrayList<>();	
+//						if(s.getCameFromState() != null)
+//						{
+//							x = s.getCameFromState().getLayout().getX() - s.getLayout().getX();
+//							y = s.getCameFromState().getLayout().getY() - s.getLayout().getY();
+//							precList.add(new SimplePredicate<Position2D>("MainCharacter_At",s.getCameFromState().getLayout()));
+//							effList.add(new SimplePredicate<Position2D>("MainCharacter_At",s.getLayout()));
+//							preconditions=new AndPredicate<>(precList);
+//							effects=new AndPredicate<>(effList);
+//							Action<Position2D> action = new Action<Position2D>("Move_MainCharacter_To",preconditions,effects);
+//							linkAction.getActions().add(action);
+//							System.out.println();
+//						}
+//					}
+//					LinkedList<Action<Position2D>> list=new LinkedList<>();
+//					LinkedList<Predicate<Position2D>> efflist1=new LinkedList<>();
+//					efflist1.add(new SimplePredicate<>("MainCharacter_At",top.getData()));
+//					linkAction.setEffects(new AndPredicate<>(efflist1));
+//					list.add(linkAction);
+//					return list;
+					
+					
 					Solution<Position2D> solution=searcher.backtrace(searchable.getGoalState(), searchable.getInitialState());
+					//State->State->State
 					
-					LinkAction<Position2D> linkAction=new LinkAction<>("");
-					
-					for (State<Position2D> s : solution.getPathToVictory()) {
-						AndPredicate<Position2D> preconditions=null;
-						AndPredicate<Position2D> effects=new AndPredicate<>();
-						ArrayList<Predicate<Position2D>> precList=new ArrayList<>();
-						ArrayList<Predicate<Position2D>> effList=new ArrayList<>();	
-						if(s.getCameFromState() != null)
+					ArrayList<State<Position2D>> list=solution.getPathToVictory();
+					Predicate<Position2D> prec=new SimplePredicate<Position2D>("MainCharacter_At",list.get(0).getLayout());
+					Predicate<Position2D> eff=new SimplePredicate<Position2D>("MainCharacter_At",list.get(list.size()-1).getLayout());
+					ArrayList<String> array=new ArrayList<>();
+					for(int i=1;i<list.size();i++)
+					{
+						Position2D currPos=list.get(i).getLayout();
+						int xCurr=currPos.getX();
+						int yCurr=currPos.getY();
+						Position2D lastPos=list.get(i-1).getLayout();
+						int xLast=lastPos.getX();
+						int yLast=lastPos.getY();
+						
+						if(yCurr==yLast)
 						{
-							x = s.getCameFromState().getLayout().getX() - s.getLayout().getX();
-							y = s.getCameFromState().getLayout().getY() - s.getLayout().getY();
-							precList.add(new SimplePredicate<Position2D>("MainCharacter_At",s.getCameFromState().getLayout()));
-							effList.add(new SimplePredicate<Position2D>("MainCharacter_At",s.getLayout()));
-							preconditions=new AndPredicate<>(precList);
-							effects=new AndPredicate<>(effList);
-							Action<Position2D> action = new Action<Position2D>("Move_MainCharacter_To",preconditions,effects);
-							linkAction.getActions().add(action);
-							System.out.println();
+							if(xCurr==xLast+1 )//2=>1 move left
+							{
+								array.add("Move left");
+							}
+							if(xCurr==xLast-1 )//1=>2 move right
+							{
+								array.add("Move right");
+							}
 						}
+						else if(xCurr==xLast)
+						{
+							if(yCurr==yLast+1 )//2=>1 move up
+							{
+								array.add("Move up");
+							}
+							if(yCurr==yLast-1 )//1=>2 move down
+							{
+								array.add("Move down");
+							}
+						}		
 					}
-					LinkedList<Action<Position2D>> list=new LinkedList<>();
-					LinkedList<Predicate<Position2D>> efflist1=new LinkedList<>();
-					efflist1.add(new SimplePredicate<>("MainCharacter_At",top.getData()));
-					linkAction.setEffects(new AndPredicate<>(efflist1));
-					list.add(linkAction);
-					return list;
+					Action<Position2D> ac=new Action<>("Move_MainCharacter_In_Direction",array);
+					ac.setEffects(new AndPredicate<>(prec));
+					ac.setPreconditions(new AndPredicate<>(eff));
+					ArrayList<Action<Position2D>> arr=new ArrayList<>();
+					arr.add(ac);
+					return arr;
+					//ITS TELEPORT
 //					if(solution!=null)
 //					{
 //						ArrayList<Predicate<Position2D>> precList=new ArrayList<>();
-//						//solution.getPathToVictory().forEach((state)->precList.add(new SimplePredicate<>("No_Crate_At",state.getLayout())));
 //						AndPredicate<Position2D> preconditions=new AndPredicate<>(precList);
-//						preconditions.add(new SimplePredicate<Position2D>("MainCharacter_At",top.getData()));
+//						for (Predicate predicateOfJustice : kb.getComponents()) {
+//							if(predicateOfJustice.getName().startsWith("MainCharacter_At"))
+//							{
+//								preconditions.add(predicateOfJustice);
+//							}
+//						}
 //						AndPredicate<Position2D> effects=new AndPredicate<>(new SimplePredicate<Position2D>("MainCharacter_At",top.getData()));
 //						Action<Position2D> action=new Action<>("Move_MainCharacter_To", preconditions, effects);
-//						ArrayList<Action<Position2D>> arr=new ArrayList<>();
-//						arr.add(action);
-//						return arr;
+//						ArrayList<Action<Position2D>> a=new ArrayList<>();
+//						a.add(action);
+//						return arr;//so it only walks once
+//						//thats good
 //					}
 				}
 			}
@@ -446,7 +503,12 @@ public class SokobanSolver implements Plannable<Position2D> {//Generates a new s
 	@Override
 	public boolean satisfies(Predicate<Position2D> p1, Predicate<Position2D> p2) {
 		//if p1 -> p2
+		if(p2==null)
+		{
+			System.out.println();
+		}
 		if(contradicts(p1, p2)) return false;
+		
 		
 		if(p1 instanceof AndPredicate)
 		{
