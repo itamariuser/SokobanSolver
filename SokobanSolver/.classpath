@@ -2,8 +2,8 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
-	<classpathentry kind="lib" path="libs/stripsLib.jar"/>
-	<classpathentry kind="lib" path="libs/searchLib.jar"/>
-	<classpathentry kind="lib" path="libs/soko1.jar"/>
+	<classpathentry kind="src" path="stripsSrc"/>
+	<classpathentry kind="src" path="searchSrc"/>
+	<classpathentry kind="src" path="sokoSrc"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

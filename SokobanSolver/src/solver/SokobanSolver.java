@@ -34,7 +34,7 @@ public class SokobanSolver implements Plannable<Position2D> {//Generates a new s
 		AndPredicate<Position2D> pToReturn = new AndPredicate<Position2D>();
 		level.getObjReferences().forEach((g)-> { 
 			if(g instanceof GoalPoint) 
-				level.getPositionsOfObject(g).forEach((p)->pToReturn.add(new SimplePredicate<Position2D>("Crate #?",p)));});
+				level.getPositionsOfObject(g).forEach((p)->pToReturn.add(new SimplePredicate<Position2D>("Crate_At",p)));});
 		goal = pToReturn;
 		
 		this.searcher=s;
@@ -49,45 +49,60 @@ public class SokobanSolver implements Plannable<Position2D> {//Generates a new s
 	public boolean contradicts(Predicate<Position2D> p1, Predicate<Position2D> p2) {//p1 => ~p2
 		String name1 = p1.getName();
 		String name2 = p2.getName();
-		if(p1.getData().equals(p2))
+		
+		if(p1 instanceof SimplePredicate)
 		{
-			if(p1 instanceof SimplePredicate)
+			if(p2 instanceof AndPredicate)
 			{
-				if(p2 instanceof AndPredicate)
+				boolean doesContra=false;
+				AndPredicate<Position2D> temp=(AndPredicate<Position2D>)p2;
+				for (Predicate<Position2D> predicate : temp.getComponents()) {
+					doesContra=contradicts(p1, predicate);
+				}
+				return doesContra;
+			}
+			if(p2 instanceof SimplePredicate)
+			{
+				if(p1.getData().equals(p2.getData()))
 				{
-					boolean doesContra=false;
-					AndPredicate<Position2D> temp=(AndPredicate<Position2D>)p2;
-					for (Predicate<Position2D> predicate : temp.getComponents()) {
-						doesContra=contradicts(p1, predicate);
+					if(name1.startsWith("Wall_At"))
+					{
+						if(name2.startsWith("Crate_At")) return true;
+						else if(name2.startsWith("Player1_At")) return true;
+						else if(name2.startsWith("GoalPoint_At")) return true;
+						else if(name2.startsWith("Wall_At")) return true;
 					}
-					return doesContra;
+					else if(name1.startsWith("Player1_At"))
+					{
+						if(name2.startsWith("Wall_At")) return true;
+						else if(name2.startsWith("Crate_At")) return true;
+					}
+					else if(name1.startsWith("Crate_At"))
+					{
+						if(name2.startsWith("Wall_At")) return true;
+						else if(name2.startsWith("Player1_At")) return true;
+						else if(name2.startsWith("Crate_At") &&  !(name1.equals(name2)))  return true;
+					}
+					else if(name1.startsWith("GoalPoint_At"))
+					{
+						if(name2.startsWith("GoalPoint_At") &&  !(name1.equals(name2)))  return true;
+						else if(name2.startsWith("Wall_At")) return true;
+					}
 				}
-				if(name1.startsWith("Wall_At"))
-				{
-					if(name2.startsWith("Crate_At")) return true;
-					else if(name2.startsWith("Player1_At")) return true;
-					else if(name2.startsWith("GoalPoint_At")) return true;
-					else if(name2.startsWith("Wall_At")) return true;
-				}
-				else if(name1.startsWith("Player1_At"))
-				{
-					if(name2.startsWith("Wall_At")) return true;
-					else if(name2.startsWith("Crate_At")) return true;
-				}
-				else if(name1.startsWith("Crate_At"))
-				{
-					if(name2.startsWith("Wall_At")) return true;
-					else if(name2.startsWith("Player1_At")) return true;
-					else if(name2.startsWith("Crate_At") &&  !(name1.equals(name2)))  return true;
-				}
-				else if(name1.startsWith("GoalPoint_At"))
-				{
-					if(name2.startsWith("GoalPoint_At") &&  !(name1.equals(name2)))  return true;
-					else if(name2.startsWith("Wall_At")) return true;
-				}
+				return false;
 			}
 		}
-			else if(p1 instanceof AndPredicate && p2 instanceof AndPredicate )
+		if(p1 instanceof AndPredicate )
+		{
+			if(p2 instanceof SimplePredicate)
+			{
+				AndPredicate<Position2D> temp=new AndPredicate<Position2D>((AndPredicate<Position2D>)p1);
+				
+				for (Predicate<Position2D> pred : temp.getComponents()) {
+					if(contradicts(pred,p2)) return true;
+				}
+			}
+			else if( p2 instanceof AndPredicate )
 			{
 				AndPredicate<Position2D> temp1=(AndPredicate<Position2D>)p1;
 				boolean doesContra=false;
@@ -96,6 +111,7 @@ public class SokobanSolver implements Plannable<Position2D> {//Generates a new s
 				}
 				return doesContra;
 			}
+		}
 		return false;
 	}
 	@Override
@@ -126,6 +142,7 @@ public class SokobanSolver implements Plannable<Position2D> {//Generates a new s
 		return getSatisfyingActions(arg0).get(0);
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public List<Action<Position2D>> getSatisfyingActions(Predicate<Position2D> top) {
 		int x=top.getData().getX();
@@ -138,31 +155,37 @@ public class SokobanSolver implements Plannable<Position2D> {//Generates a new s
 			Action<Position2D> act=new Action<Position2D>("Move_Crate_To");
 			act.setEffects(new AndPredicate<>(top));//set effects to be "Crate at position "(x,y)", "No non solid at position (x,y)" (which means crate is in pos)
 			SimplePredicate<Position2D> player1IsAtPosition=new SimplePredicate<Position2D>("Player1_At",null);//add player in position to push the crate
-			SimplePredicate<Position2D> CrateIsAtPosition=new SimplePredicate<Position2D>("Crate_At",null);//crate is at position to be pushed
+			
 			SimplePredicate<Position2D> wallAtNextPos=new SimplePredicate<Position2D>("Wall_At",new Position2D(x,y));
 			SimplePredicate<Position2D> crateAtPosition=new SimplePredicate<>("Crate_At",new Position2D(x,y));
 			
 			if(contradicts(kb,wallAtNextPos))//check if no wall at nextPos
 			{
-				if(contradicts(kb, crateAtPosition))
+				if(!satisfies(kb, crateAtPosition))
 				{
+					SimplePredicate<Position2D> playerNewPos=new SimplePredicate<Position2D>("Player1_At");
+					
+					SimplePredicate<Position2D> CrateIsAtPosition=new SimplePredicate<Position2D>("Crate_At",null);//crate is at position to be pushed
+					SimplePredicate<Position2D> wallAtPlayer
 					//push right
-					
-					CrateIsAtPosition.setData(new Position2D(x-1,y));
-					player1IsAtPosition.setData(new Position2D(x-2,y));
-					
-					updateLists(toGenerate,toRemove,new SimplePredicate<>(CrateIsAtPosition),new SimplePredicate<>(player1IsAtPosition));
-					
-					act.setPreconditions(new AndPredicate<Position2D>(toGenerate));
-					possibleActions.add(new Action<Position2D>(act.getName(),act.getPreconditions(),act.getEffects()));
-				
+					if(!satisfies(kb, p2))
+					{
+						CrateIsAtPosition.setData(new Position2D(x-1,y));
+						player1IsAtPosition.setData(new Position2D(x-2,y));
+						
+						playerNewPos.setData(new Position2D(x-1,y));
+						updateLists(toGenerate,toRemove,new SimplePredicate<>(CrateIsAtPosition),new SimplePredicate<>(player1IsAtPosition));
+						act.setEffects(new AndPredicate<>(top,new SimplePredicate<Position2D>(playerNewPos)));
+						act.setPreconditions(new AndPredicate<Position2D>(toGenerate));
+						possibleActions.add(new Action<Position2D>(act.getName(),act.getPreconditions(),act.getEffects()));
+					}
 					//down
 					
 					CrateIsAtPosition.setData(new Position2D(x,y-1));
 					player1IsAtPosition.setData(new Position2D(x,y-2));
-					
+					playerNewPos.setData(new Position2D(x,y-1));
 					updateLists(toGenerate,toRemove,new SimplePredicate<>(CrateIsAtPosition),new SimplePredicate<>(player1IsAtPosition));
-					
+					act.setEffects(new AndPredicate<>(top,new SimplePredicate<Position2D>(playerNewPos)));
 					act.setPreconditions(new AndPredicate<Position2D>(toGenerate));
 					possibleActions.add(new Action<Position2D>(act.getName(),act.getPreconditions(),act.getEffects()));
 					
@@ -170,9 +193,9 @@ public class SokobanSolver implements Plannable<Position2D> {//Generates a new s
 					
 					CrateIsAtPosition.setData(new Position2D(x+1,y));
 					player1IsAtPosition.setData(new Position2D(x+2,y));
-					
+					playerNewPos.setData(new Position2D(x+1,y));
 					updateLists(toGenerate,toRemove,new SimplePredicate<>(CrateIsAtPosition),new SimplePredicate<>(player1IsAtPosition));
-					
+					act.setEffects(new AndPredicate<>(top,new SimplePredicate<Position2D>(playerNewPos)));
 					act.setPreconditions(new AndPredicate<Position2D>(toGenerate));
 					possibleActions.add(new Action<Position2D>(act.getName(),act.getPreconditions(),act.getEffects()));
 					
@@ -180,9 +203,9 @@ public class SokobanSolver implements Plannable<Position2D> {//Generates a new s
 					
 					CrateIsAtPosition.setData(new Position2D(x,y+1));
 					player1IsAtPosition.setData(new Position2D(x,y+2));
-					
+					playerNewPos.setData(new Position2D(x,y+1));
 					updateLists(toGenerate,toRemove,new SimplePredicate<>(CrateIsAtPosition),new SimplePredicate<>(player1IsAtPosition));
-					
+					act.setEffects(new AndPredicate<>(top,new SimplePredicate<Position2D>(playerNewPos)));
 					act.setPreconditions(new AndPredicate<Position2D>(toGenerate));
 					possibleActions.add(new Action<Position2D>(act.getName(),act.getPreconditions(),act.getEffects()));
 				}
@@ -205,6 +228,7 @@ public class SokobanSolver implements Plannable<Position2D> {//Generates a new s
 			
 			System.out.println("GENERATED FOR PREDICATE:\n"+top.toString()+"\nNEW ACTIONS: \n"+actionsToString.toString());
 			*/
+			System.out.println(possibleActions);
 			return possibleActions;
 		}
 		if(top.getName().startsWith("Player1")){
@@ -278,14 +302,15 @@ public class SokobanSolver implements Plannable<Position2D> {//Generates a new s
 		return null;
 	}
 	
-	@SafeVarargs
-	private static void updateLists(List<Predicate<Position2D>> toGenerate,List<Predicate<Position2D>> toRemove,Predicate<Position2D>...predicates )
+	@SuppressWarnings("unchecked")
+	/*
+	 * add 
+	 */
+	private void updateLists(List<Predicate<Position2D>> toGenerate,List<Predicate<Position2D>> toRemove,Predicate<Position2D>...predicates )
 	{
-		toRemove.forEach((Predicate<Position2D> p)->
-		{
-			toRemove.remove(p);
-			toGenerate.remove(p);
-		});
+		toRemove.forEach((p)->toGenerate.remove(p));
+		toRemove.clear();
+		
 		for (Predicate<Position2D> predicate : predicates) {
 			toGenerate.add(predicate);
 			toRemove.add(predicate);
@@ -302,16 +327,11 @@ public class SokobanSolver implements Plannable<Position2D> {//Generates a new s
 		{
 			if(p2 instanceof SimplePredicate)
 			{
-				AndPredicate<Position2D> temp = (AndPredicate<Position2D>) p1;
-				for (Predicate<Position2D> predicate : temp.getComponents()) 
-				{
-					if(!(temp.getComponents().contains(predicate))) return false;
-				}
-				return true;
+				return  ((AndPredicate<Position2D>) p1).getComponents().contains(p2);
 			}
 			if(p2 instanceof AndPredicate)
 			{
-				return p1.equals(p2);
+				return ((AndPredicate<Position2D>) p1).getComponents().containsAll(((AndPredicate<Position2D>) p2).getComponents());
 			}
 		}
 		return false;

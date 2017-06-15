@@ -1,10 +1,7 @@
 package boot;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 
 import algorithm.Strips;
 import data.BestFirstSearcher;
@@ -18,7 +15,7 @@ public class Main {
 		TextLevel2DLoader loader=new TextLevel2DLoader();
 		try{
 			Strips<Position2D> strips=new Strips<>();
-			strips.plan(new SokobanSolver(loader.loadLevelFromStream(new FileInputStream("/levels/level1")), new BestFirstSearcher<>()));
+			strips.plan(new SokobanSolver(loader.loadLevelFromStream(new FileInputStream("C:/Users/shefferit/Desktop/level1")), new BestFirstSearcher<>()));
 		}catch(Exception e)
 		{
 			e.printStackTrace();
