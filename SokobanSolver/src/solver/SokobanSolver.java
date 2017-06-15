@@ -15,15 +15,20 @@ import data.Searchable;
 import data.Searcher;
 import data.Solution;
 import data.State;
+import gameObjects.Crate;
 import gameObjects.GameObject;
+import gameObjects.GameObjectFactory;
 import gameObjects.GoalPoint;
+import gameObjects.MainCharacter;
 import gameObjects.Position2D;
+import gameObjects.Wall;
 import model.Level2D;
 
 public class SokobanSolver implements Plannable<Position2D> {//Generates a new searchable, everytime goalState= where we want to go for "Move player" action
 	Searcher<Position2D> searcher;
 	AndPredicate<Position2D> kb;
 	AndPredicate<Position2D> goal;
+	int[] bounds;
 	public SokobanSolver(Level2D level, Searcher<Position2D> s) {
 		kb=new AndPredicate<Position2D>();
 		//generate knowledgebase
@@ -39,6 +44,57 @@ public class SokobanSolver implements Plannable<Position2D> {//Generates a new s
 		
 		this.searcher=s;
 	}
+	
+	public Level2D toLevel(AndPredicate<Position2D> knowledgeB)
+	{
+		Level2D levelToReturn = new Level2D();
+		GameObjectFactory factory = new GameObjectFactory();
+		GameObject obj;
+		ArrayList<GameObject> objRef = new ArrayList<GameObject>();
+		ArrayList<GameObject> arr = new ArrayList<GameObject>();
+		for (Predicate<Position2D> p : knowledgeB.getComponents()) {
+			Position2D pos = p.getData();
+			if(p.getName().startsWith("Crate_At"))
+			{
+				obj = factory.createObject(Crate.class.getName().toString());
+				obj.setCurrentLocation(pos);
+				arr.add(obj);
+				levelToReturn.putInLayout(pos, arr);
+				objRef.add(obj);
+				levelToReturn.setObjReferences(objRef);
+			}
+			else if(p.getName().startsWith("MainCharacter_At"))
+			{
+				obj = factory.createObject(MainCharacter.class.getName().toString());
+				obj.setCurrentLocation(pos);
+				arr.add(obj);
+				levelToReturn.putInLayout(pos, arr);
+				objRef.add(obj);
+				levelToReturn.setObjReferences(objRef);
+			}
+			else if(p.getName().startsWith("Wall_At"))
+			{
+				obj = factory.createObject(Wall.class.getName().toString());
+				obj.setCurrentLocation(pos);
+				arr.add(obj);
+				levelToReturn.putInLayout(pos, arr);
+				objRef.add(obj);
+				levelToReturn.setObjReferences(objRef);
+			}
+			else if(p.getName().startsWith("Crate_At"))
+			{
+				obj = factory.createObject(Crate.class.getName().toString());
+				obj.setCurrentLocation(pos);
+				arr.add(obj);
+				levelToReturn.putInLayout(pos, arr);
+				objRef.add(obj);
+				levelToReturn.setObjReferences(objRef);
+			}
+			arr.clear();
+		}
+		return levelToReturn;
+	}
+	
 	
 	
 	/**
@@ -68,11 +124,11 @@ public class SokobanSolver implements Plannable<Position2D> {//Generates a new s
 					if(name1.startsWith("Wall_At"))
 					{
 						if(name2.startsWith("Crate_At")) return true;
-						else if(name2.startsWith("Player1_At")) return true;
+						else if(name2.startsWith("MainCharacter_At")) return true;
 						else if(name2.startsWith("GoalPoint_At")) return true;
 						else if(name2.startsWith("Wall_At")) return true;
 					}
-					else if(name1.startsWith("Player1_At"))
+					else if(name1.startsWith("MainCharacter_At"))
 					{
 						if(name2.startsWith("Wall_At")) return true;
 						else if(name2.startsWith("Crate_At")) return true;
@@ -80,7 +136,7 @@ public class SokobanSolver implements Plannable<Position2D> {//Generates a new s
 					else if(name1.startsWith("Crate_At"))
 					{
 						if(name2.startsWith("Wall_At")) return true;
-						else if(name2.startsWith("Player1_At")) return true;
+						else if(name2.startsWith("MainCharacter_At")) return true;
 						else if(name2.startsWith("Crate_At") &&  !(name1.equals(name2)))  return true;
 					}
 					else if(name1.startsWith("GoalPoint_At"))
@@ -98,9 +154,21 @@ public class SokobanSolver implements Plannable<Position2D> {//Generates a new s
 			{
 				AndPredicate<Position2D> temp=new AndPredicate<Position2D>((AndPredicate<Position2D>)p1);
 				
+				//max
+				int maxY=-1;
+				int maxX=-1;
 				for (Predicate<Position2D> pred : temp.getComponents()) {
+					Position2D currentPos=pred.getData();
+					if(maxY<currentPos.getY()) maxY=currentPos.getY();
+					if(maxX<currentPos.getX()) maxX=currentPos.getX();
 					if(contradicts(pred,p2)) return true;
 				}
+				if(p2.getData().getX()>maxX || p2.getData().getY()>maxY)
+				{
+					return true;
+				}
+				return false;
+				
 			}
 			else if( p2 instanceof AndPredicate )
 			{
@@ -139,8 +207,11 @@ public class SokobanSolver implements Plannable<Position2D> {//Generates a new s
 	
 	@Override
 	public Action<Position2D> getSatisfyingAction(Predicate<Position2D> arg0) {
+		List<Action<Position2D>> list=getSatisfyingActions(arg0); 
 		return getSatisfyingActions(arg0).get(0);
 	}
+	
+	
 	
 	@SuppressWarnings("unchecked")
 	@Override
@@ -154,7 +225,7 @@ public class SokobanSolver implements Plannable<Position2D> {//Generates a new s
 			ArrayList<Predicate<Position2D>> toRemove=new ArrayList<>();//items in this list will be removed after each generation of action
 			Action<Position2D> act=new Action<Position2D>("Move_Crate_To");
 			act.setEffects(new AndPredicate<>(top));//set effects to be "Crate at position "(x,y)", "No non solid at position (x,y)" (which means crate is in pos)
-			SimplePredicate<Position2D> player1IsAtPosition=new SimplePredicate<Position2D>("Player1_At",null);//add player in position to push the crate
+			SimplePredicate<Position2D> player1IsAtPosition=new SimplePredicate<Position2D>("MainCharacter_At",null);//add player in position to push the crate
 			
 			SimplePredicate<Position2D> wallAtNextPos=new SimplePredicate<Position2D>("Wall_At",new Position2D(x,y));
 			SimplePredicate<Position2D> crateAtPosition=new SimplePredicate<>("Crate_At",new Position2D(x,y));
@@ -163,16 +234,17 @@ public class SokobanSolver implements Plannable<Position2D> {//Generates a new s
 			{
 				if(!satisfies(kb, crateAtPosition))
 				{
-					SimplePredicate<Position2D> playerNewPos=new SimplePredicate<Position2D>("Player1_At");
+					SimplePredicate<Position2D> playerNewPos=new SimplePredicate<Position2D>("MainCharacter_At");
 					
 					SimplePredicate<Position2D> CrateIsAtPosition=new SimplePredicate<Position2D>("Crate_At",null);//crate is at position to be pushed
-					SimplePredicate<Position2D> wallAtPlayer
+					//SimplePredicate<Position2D> wallAtPlayerPos=new SimplePredicate<>(other);
+					
+					
 					//push right
-					if(!satisfies(kb, p2))
+					CrateIsAtPosition.setData(new Position2D(x-1,y));
+					player1IsAtPosition.setData(new Position2D(x-2,y));
+					if(contradicts(kb, new SimplePredicate<>("Wall_At",player1IsAtPosition.getData())))
 					{
-						CrateIsAtPosition.setData(new Position2D(x-1,y));
-						player1IsAtPosition.setData(new Position2D(x-2,y));
-						
 						playerNewPos.setData(new Position2D(x-1,y));
 						updateLists(toGenerate,toRemove,new SimplePredicate<>(CrateIsAtPosition),new SimplePredicate<>(player1IsAtPosition));
 						act.setEffects(new AndPredicate<>(top,new SimplePredicate<Position2D>(playerNewPos)));
@@ -180,34 +252,39 @@ public class SokobanSolver implements Plannable<Position2D> {//Generates a new s
 						possibleActions.add(new Action<Position2D>(act.getName(),act.getPreconditions(),act.getEffects()));
 					}
 					//down
-					
 					CrateIsAtPosition.setData(new Position2D(x,y-1));
 					player1IsAtPosition.setData(new Position2D(x,y-2));
-					playerNewPos.setData(new Position2D(x,y-1));
-					updateLists(toGenerate,toRemove,new SimplePredicate<>(CrateIsAtPosition),new SimplePredicate<>(player1IsAtPosition));
-					act.setEffects(new AndPredicate<>(top,new SimplePredicate<Position2D>(playerNewPos)));
-					act.setPreconditions(new AndPredicate<Position2D>(toGenerate));
-					possibleActions.add(new Action<Position2D>(act.getName(),act.getPreconditions(),act.getEffects()));
-					
+					if(contradicts(kb, new SimplePredicate<>("Wall_At",player1IsAtPosition.getData())))
+					{
+						playerNewPos.setData(new Position2D(x,y-1));
+						updateLists(toGenerate,toRemove,new SimplePredicate<>(CrateIsAtPosition),new SimplePredicate<>(player1IsAtPosition));
+						act.setEffects(new AndPredicate<>(top,new SimplePredicate<Position2D>(playerNewPos)));
+						act.setPreconditions(new AndPredicate<Position2D>(toGenerate));
+						possibleActions.add(new Action<Position2D>(act.getName(),act.getPreconditions(),act.getEffects()));
+					}
 					//left
-					
 					CrateIsAtPosition.setData(new Position2D(x+1,y));
 					player1IsAtPosition.setData(new Position2D(x+2,y));
-					playerNewPos.setData(new Position2D(x+1,y));
-					updateLists(toGenerate,toRemove,new SimplePredicate<>(CrateIsAtPosition),new SimplePredicate<>(player1IsAtPosition));
-					act.setEffects(new AndPredicate<>(top,new SimplePredicate<Position2D>(playerNewPos)));
-					act.setPreconditions(new AndPredicate<Position2D>(toGenerate));
-					possibleActions.add(new Action<Position2D>(act.getName(),act.getPreconditions(),act.getEffects()));
+					if(contradicts(kb, new SimplePredicate<>("Wall_At",player1IsAtPosition.getData())))
+					{
+						playerNewPos.setData(new Position2D(x+1,y));
+						updateLists(toGenerate,toRemove,new SimplePredicate<>(CrateIsAtPosition),new SimplePredicate<>(player1IsAtPosition));
+						act.setEffects(new AndPredicate<>(top,new SimplePredicate<Position2D>(playerNewPos)));
+						act.setPreconditions(new AndPredicate<Position2D>(toGenerate));
+						possibleActions.add(new Action<Position2D>(act.getName(),act.getPreconditions(),act.getEffects()));
+					}
 					
 					//up
-					
 					CrateIsAtPosition.setData(new Position2D(x,y+1));
 					player1IsAtPosition.setData(new Position2D(x,y+2));
-					playerNewPos.setData(new Position2D(x,y+1));
-					updateLists(toGenerate,toRemove,new SimplePredicate<>(CrateIsAtPosition),new SimplePredicate<>(player1IsAtPosition));
-					act.setEffects(new AndPredicate<>(top,new SimplePredicate<Position2D>(playerNewPos)));
-					act.setPreconditions(new AndPredicate<Position2D>(toGenerate));
-					possibleActions.add(new Action<Position2D>(act.getName(),act.getPreconditions(),act.getEffects()));
+					if(contradicts(kb, new SimplePredicate<>("Wall_At",player1IsAtPosition.getData())))
+					{
+						playerNewPos.setData(new Position2D(x,y+1));
+						updateLists(toGenerate,toRemove,new SimplePredicate<>(CrateIsAtPosition),new SimplePredicate<>(player1IsAtPosition));
+						act.setEffects(new AndPredicate<>(top,new SimplePredicate<Position2D>(playerNewPos)));
+						act.setPreconditions(new AndPredicate<Position2D>(toGenerate));
+						possibleActions.add(new Action<Position2D>(act.getName(),act.getPreconditions(),act.getEffects()));
+					}
 				}
 				else if(satisfies(kb, crateAtPosition))//there's a crate in the position
 				{
@@ -228,12 +305,12 @@ public class SokobanSolver implements Plannable<Position2D> {//Generates a new s
 			
 			System.out.println("GENERATED FOR PREDICATE:\n"+top.toString()+"\nNEW ACTIONS: \n"+actionsToString.toString());
 			*/
-			System.out.println(possibleActions);
+//			System.out.println(possibleActions);
 			return possibleActions;
 		}
 		if(top.getName().startsWith("Player1")){
 			for (Predicate<Position2D> p : kb.getComponents()) {
-				if(p.getName().startsWith("Player1_At")){
+				if(p.getName().startsWith("MainCharacter_At")){
 					Searchable<Position2D> searchable=new Searchable<Position2D>() {
 						
 						@Override
