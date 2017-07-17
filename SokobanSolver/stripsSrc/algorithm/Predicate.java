@@ -1,9 +1,8 @@
 package algorithm;
 
-public abstract class Predicate<T> {
+public abstract class Predicate<T> extends StripsItem<T> {
 	
 	T data;
-	protected String name;
 	
 
 	public String getName() {
@@ -23,11 +22,12 @@ public abstract class Predicate<T> {
 	}
 
 	public Predicate(String name) {
+		super(name);
 		this.name = name;
 	}
 
 	public Predicate(String name, T data) {
-		this.name = name;
+		super(name);
 		this.data = data;
 	}
 

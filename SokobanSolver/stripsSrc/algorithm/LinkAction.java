@@ -1,7 +1,7 @@
 package algorithm;
 
 import java.util.LinkedList;
-
+//For consecutive actions
 public class LinkAction<T> extends Action<T>{
 	LinkedList<Action<T>> actions;
 	public LinkAction(String name) {
@@ -14,6 +14,4 @@ public class LinkAction<T> extends Action<T>{
 	public void setActions(LinkedList<Action<T>> actions) {
 		this.actions = actions;
 	}
-	
-
 }

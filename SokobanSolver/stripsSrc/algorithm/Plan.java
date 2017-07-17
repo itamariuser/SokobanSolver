@@ -1,10 +1,15 @@
 package algorithm;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Plan<T> {
 	List<Action<T>> actions;
 
+	public Plan() {
+		actions=new ArrayList<>();
+	}
+	
 	public List<Action<T>> getActions() {
 		return actions;
 	}

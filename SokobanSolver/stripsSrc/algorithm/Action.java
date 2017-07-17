@@ -2,7 +2,7 @@ package algorithm;
 
 import java.util.ArrayList;
 
-public class Action<T> extends Predicate<T> {
+public class Action<T> extends StripsItem<T> {
 	
 
 	protected AndPredicate<T> preconditions;
