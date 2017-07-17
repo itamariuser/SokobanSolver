@@ -17,13 +17,15 @@ import model.data.GoalPoint;
 import model.data.MainCharacter;
 import model.data.Position2D;
 import model.data.Wall;
+import model.policy.SokobanPolicy;
 
 public class LevelPlannable implements Plannable<Position2D> {
 	AndPredicate<Position2D> goal;
 	AndPredicate<Position2D> kb;
+	SokobanPolicy policy;
 	
-	
-	public LevelPlannable(Level2D lev) {
+	public LevelPlannable(Level2D lev, SokobanPolicy policy) {
+		this.policy=policy;
 		goal=new AndPredicate<Position2D>();
 		kb=new AndPredicate<Position2D>();
 		//generate knowledgebase
@@ -89,6 +91,33 @@ public class LevelPlannable implements Plannable<Position2D> {
 		return levelToReturn;
 	}
 	
+	@Override
+	public List<Action<Position2D>> getSatisfyingActions(Predicate<Position2D> target) {
+		ArrayList<Action<Position2D>> actions=new ArrayList<>();
+		Level2D level=this.toLevel();
+		boolean legal=false;
+		String name=target.getName();
+		
+		if(name.startsWith("MainCharacter_At"))
+		{
+			//TODO: searcher
+		}
+		else if(name.startsWith("Crate_At"))
+		{
+			
+		}
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		return actions;
+	}
+	
 	
 	
 	
@@ -135,23 +164,7 @@ public class LevelPlannable implements Plannable<Position2D> {
 		return null;
 	}
 	
-	@Override
-	public List<Action<Position2D>> getSatisfyingActions(Predicate<Position2D> target) {
-		ArrayList<Action<Position2D>> actions=new ArrayList<>();
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		return actions;
-	}
+	
 
 	@Override
 	public boolean contradicts(Predicate<Position2D> p1, Predicate<Position2D> p2) {//p1 => ~p2
@@ -204,7 +217,6 @@ public class LevelPlannable implements Plannable<Position2D> {
 					{
 						if(name2.startsWith("Wall_At")) return true; //TODO
 					}
-
 				}
 				return false;
 			}
@@ -284,9 +296,10 @@ public class LevelPlannable implements Plannable<Position2D> {
 	}
 	
 	@Override
-	public void updateKb(AndPredicate<Position2D> effects) {//TODO
-		// TODO Auto-generated method stub
-		
+	public void updateKb(AndPredicate<Position2D> effects) {
+		effects.getComponents().forEach((p) -> {
+			kb.getComponents().removeIf((pr) -> contradicts(p, pr));
+		});
 	}
 
 }

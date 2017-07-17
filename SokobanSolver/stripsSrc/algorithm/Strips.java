@@ -1,9 +1,6 @@
 package algorithm;
 
-import java.util.LinkedList;
 import java.util.Stack;
-
-import gameObjects.Position2D;
 
 public class Strips<T> implements Planner<T> {
 	@Override
@@ -17,7 +14,7 @@ public class Strips<T> implements Planner<T> {
 			if(top instanceof AndPredicate)
 			{
 				((AndPredicate<T>) top).getComponents().forEach((p)->{
-					if(!plannable.satisfies(plannable.getKnowledgebase(), p)) {stack.push(p);}
+					if(!plannable.kbSatisfies(p)) {stack.push(p);}
 				});
 			}
 			else if(top instanceof SimplePredicate)
