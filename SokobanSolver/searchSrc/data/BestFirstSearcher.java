@@ -7,8 +7,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.PriorityQueue;
 
-import gameObjects.Position2D;
-
 public class BestFirstSearcher<T> extends CommonSearcher<T> {
 	
 	private HashSet<State<T>> closed;
@@ -53,21 +51,6 @@ public class BestFirstSearcher<T> extends CommonSearcher<T> {
 		return null;
 	}
 	
-	private State<T> getEqualDataS(HashMap<State<T>,State<T>> map,State<T> state)
-	{
-		if(state.getLayout().equals(new Position2D(1,3)))
-		{
-			System.out.println();
-		}
-		for (State<T> s1 : map.keySet()) {
-			if(state.getLayout().equals(s1.getLayout())){
-				return map.get(state);
-			}
-		}
-		
-		return null;
-	}
-
 	@Override
 	public Solution<T> search(Searchable<T> s) throws GoalNotFoundException {
 		State<T> initialState=s.getInitialState();

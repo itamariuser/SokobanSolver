@@ -14,4 +14,14 @@ public class SimplePredicate<T> extends Predicate<T> {
 		this.name=other.name;
 		this.data=other.data;
 	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public boolean equals(Object obj) {
+		if(obj instanceof SimplePredicate)
+		{
+			return (this.data.equals(((SimplePredicate<T>)obj).data) && this.name.equals(((SimplePredicate<T>)obj).name));
+		}
+		return false;
+	}
 }

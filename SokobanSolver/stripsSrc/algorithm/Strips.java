@@ -8,9 +8,9 @@ public class Strips<T> implements Planner<T> {
 		Plan<T> plan=new Plan<>();
 		Stack<StripsItem<T>> stack=new Stack<>();
 		stack.push(plannable.getGoal());
-		StripsItem<T> top=stack.peek();
 		while(!stack.isEmpty())
 		{
+			StripsItem<T> top=stack.peek();
 			if(top instanceof AndPredicate)
 			{
 				((AndPredicate<T>) top).getComponents().forEach((p)->{
@@ -42,7 +42,7 @@ public class Strips<T> implements Planner<T> {
 					linkActionTop.getActions().forEach((a)->stack.push(a));
 				}
 			}
-			else if(plannable.kbSatisfies((Predicate<T>) top))
+			if(plannable.kbSatisfies((Predicate<T>) top))
 			{
 				stack.pop();
 			}

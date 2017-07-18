@@ -9,7 +9,7 @@ public class Action<T> extends StripsItem<T> {
 	
 	protected AndPredicate<T> effects;
 	
-	protected ArrayList<String> sub;
+//	protected ArrayList<String> sub;
 
 	
 	public AndPredicate<T> getPreconditions() {
@@ -38,25 +38,26 @@ public class Action<T> extends StripsItem<T> {
 	
 	public Action(String name,ArrayList<String> sub) {
 		super(name);
-		this.sub=sub;
 	}
-	
-	
-
-
-	public ArrayList<String> getSub() {
-		return sub;
-	}
-
-
-	public void setSub(ArrayList<String> sub) {
-		this.sub = sub;
-	}
+//		this.sub=sub;
+//	}
+//	
+//	
+//
+//
+//	public ArrayList<String> getSub() {
+//		return sub;
+//	}
+//
+//
+//	public void setSub(ArrayList<String> sub) {
+//		this.sub = sub;
+//	}
 
 
 	@Override
 	public String toString() {
-		return "Type: "+this.getClass().getSimpleName()+"\nName: "+this.name+"\n Preconditions: "+this.preconditions.toString()+"\n Effects: "+this.effects.toString();
+		return "Name: "+this.name+"\n Preconditions: "+this.preconditions.toString()+"\n Effects: "+this.effects.toString();
 	}
 	public Action(String name,AndPredicate<T> preconditions,AndPredicate<T> effects) {
 		super("DEFAULT");
