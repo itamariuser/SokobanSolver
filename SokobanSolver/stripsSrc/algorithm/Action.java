@@ -9,8 +9,6 @@ public class Action<T> extends StripsItem<T> {
 	
 	protected AndPredicate<T> effects;
 	
-//	protected ArrayList<String> sub;
-
 	
 	public AndPredicate<T> getPreconditions() {
 		return preconditions;
@@ -39,20 +37,7 @@ public class Action<T> extends StripsItem<T> {
 	public Action(String name,ArrayList<String> sub) {
 		super(name);
 	}
-//		this.sub=sub;
-//	}
-//	
-//	
-//
-//
-//	public ArrayList<String> getSub() {
-//		return sub;
-//	}
-//
-//
-//	public void setSub(ArrayList<String> sub) {
-//		this.sub = sub;
-//	}
+
 
 
 	@Override

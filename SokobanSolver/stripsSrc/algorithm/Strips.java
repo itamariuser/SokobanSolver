@@ -22,16 +22,7 @@ public class Strips<T> implements Planner<T> {
 			else if(top instanceof SimplePredicate)
 			{
 				Predicate<T> predTop=(Predicate<T>) top;
-				if(predTop.getName().startsWith("Crate_At") && predTop.getData().equals(new Position2D(3,1)))
-				{
-					if(!plannable.kbSatisfies(predTop))//
-					{
-						Action<T> act=plannable.getSatisfyingAction(predTop);
-						stack.push(act);
-						act.getPreconditions().getComponents().forEach((p)->stack.push(p));
-					}
-				}
-				else if(!plannable.kbSatisfies(predTop))
+				if(!plannable.kbSatisfies(predTop))
 				{
 					Action<T> act=plannable.getSatisfyingAction(predTop);
 					stack.push(act);
@@ -44,7 +35,7 @@ public class Strips<T> implements Planner<T> {
 				if(!(top instanceof LinkAction))
 				{
 					Action<T> actionTop=(Action<T>) top;
-					plannable.updateKb(actionTop.getEffects());//TODO: READ THE "TODO" IN UPDATE
+					plannable.updateKb(actionTop.getEffects());
 					plan.add(actionTop);
 				}
 				else//top instanceof LinkAction
