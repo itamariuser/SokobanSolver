@@ -2,6 +2,8 @@ package algorithm;
 
 import java.util.Stack;
 
+import model.data.Position2D;
+
 public class Strips<T> implements Planner<T> {
 	@Override
 	public Plan<T> plan(Plannable<T> plannable) {
@@ -20,14 +22,23 @@ public class Strips<T> implements Planner<T> {
 			else if(top instanceof SimplePredicate)
 			{
 				Predicate<T> predTop=(Predicate<T>) top;
-				if(!plannable.kbSatisfies(predTop))
+				if(predTop.getName().startsWith("Crate_At") && predTop.getData().equals(new Position2D(3,1)))
+				{
+					if(!plannable.kbSatisfies(predTop))//
+					{
+						Action<T> act=plannable.getSatisfyingAction(predTop);
+						stack.push(act);
+						act.getPreconditions().getComponents().forEach((p)->stack.push(p));
+					}
+				}
+				else if(!plannable.kbSatisfies(predTop))
 				{
 					Action<T> act=plannable.getSatisfyingAction(predTop);
 					stack.push(act);
 					act.getPreconditions().getComponents().forEach((p)->stack.push(p));
 				}
 			}
-			else if(top instanceof Action)
+			if(top instanceof Action)
 			{
 				stack.pop();
 				if(!(top instanceof LinkAction))
@@ -42,7 +53,7 @@ public class Strips<T> implements Planner<T> {
 					linkActionTop.getActions().forEach((a)->stack.push(a));
 				}
 			}
-			if(plannable.kbSatisfies((Predicate<T>) top))
+			else if(plannable.kbSatisfies((Predicate<T>) top))
 			{
 				stack.pop();
 			}

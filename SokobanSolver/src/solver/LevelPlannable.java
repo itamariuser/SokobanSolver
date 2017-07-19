@@ -275,15 +275,14 @@ public class LevelPlannable implements Plannable<Position2D> {
 		{
 			if(p2 instanceof AndPredicate)
 			{
-				boolean doesContra=false;
 				AndPredicate<Position2D> temp=(AndPredicate<Position2D>)p2;
 				for (Predicate<Position2D> predicate : temp.getComponents()) {
-					doesContra=contradicts(p1, predicate);
+					if(contradicts(p1, predicate)) return true;
 				}
-				return doesContra;
 			}
 			if(p2 instanceof SimplePredicate)
 			{
+				if(p1.equals(p2)) return false;
 				if(p1.getData().equals(p2.getData()))
 				{
 					if(name1.startsWith("Wall_At"))
@@ -301,7 +300,7 @@ public class LevelPlannable implements Plannable<Position2D> {
 					{
 						if(name2.startsWith("Wall_At")) return true;
 						else if(name2.startsWith("MainCharacter_At")) return true;
-						else if(name2.startsWith("Crate_At") &&  !(name1.equals(name2)))  return true;
+						else if(name2.startsWith("Clear_At")) return true;
 					}
 					else if(name1.startsWith("GoalPoint_At"))
 					{
@@ -311,7 +310,10 @@ public class LevelPlannable implements Plannable<Position2D> {
 					else if(name1.startsWith("BlankSpace_At"))
 					{
 						if(name2.startsWith("Wall_At")) return true; 
-						else if(name2.startsWith("Crate_At")) return true;
+					}
+					else if(name1.startsWith("Clear_At"))
+					{
+						if(name2.startsWith("Crate_At")) return true;
 						else if(name2.startsWith("MainCharacter_At")) return true;
 					}
 				}
@@ -330,7 +332,19 @@ public class LevelPlannable implements Plannable<Position2D> {
 					Position2D currentPos=pred.getData();
 					if(maxY<currentPos.getY()) maxY=currentPos.getY();
 					if(maxX<currentPos.getX()) maxX=currentPos.getX();
-					if(contradicts(pred,p2)) return true;
+					if(pred.getName().startsWith("Crate_At"))//&&p2.getName().startsWith("Crate_At"))
+					{
+						if(contradicts(pred,p2)) 
+						{
+							boolean z=contradicts(pred,p2);
+							
+							return true;//
+						}
+					}
+					else if(contradicts(pred,p2)) 
+					{
+						return true;
+					}
 				}
 				if(p2.getData().getX()>maxX || p2.getData().getY()>maxY)
 				{
@@ -358,16 +372,23 @@ public class LevelPlannable implements Plannable<Position2D> {
 		//if p1 -> p2
 		if(p1==null || p2==null)
 		{
-			System.out.println();
+			System.out.println("IS ERROR");
 		}
-		if(contradicts(p1, p2)) return false;
+		boolean contra=contradicts(p1, p2);
+		if(contra) return false;
+		
 		
 		if(p1 instanceof AndPredicate)
 		{
-			if(p2 instanceof SimplePredicate)
+			if(p2 instanceof SimplePredicate)//
 			{
 				AndPredicate<Position2D> s=((AndPredicate<Position2D>) p1);
 				for (Predicate<Position2D> p : s.getComponents()) {
+					if(p.getName().startsWith("Crate_At") && p2.getName().startsWith("Crate_At"))//DEBUG
+					{
+						boolean z=satisfies(p, p2);
+						if(z) return true;
+					}
 					if(satisfies(p, p2)) return true;
 				}
 				return false;
@@ -384,16 +405,20 @@ public class LevelPlannable implements Plannable<Position2D> {
 			}
 		}
 		
-		else if(p1 instanceof SimplePredicate)
+		else if(p1 instanceof SimplePredicate)//
 		{
 			//TODO: GAME LOGIC HERE
-			
+			if(p1.getName().startsWith("Crate_At") && p2.getName().startsWith("Crate_At"))
+			{
+				System.out.println("S");
+			}
 			if(p2 instanceof SimplePredicate)
 			{
+				boolean z=p1.equals(p2);
 				if(p1.equals(p2)) return true;
 				if(p2.getName().startsWith("Clear_At"))
 				{
-					if(p1.getName().startsWith("GoalPoint_At")) return true;
+					if(p1.getName().startsWith("GoalPoint_At")) return true;//TODO: CHECK IF NO CRATE IN POSITION
 					if(p1.getName().startsWith("BlankSpace_At")) return true;
 				}
 			}
@@ -425,8 +450,20 @@ public class LevelPlannable implements Plannable<Position2D> {
 	@Override
 	public void updateKb(AndPredicate<Position2D> effects) {
 		effects.getComponents().forEach((p) -> {
-			kb.getComponents().removeIf((pr) -> contradicts(p, pr));
+			
+			kb.getComponents().removeIf((pr) -> {
+				if(pr.getData().equals(p.getData()) && (pr.getName().startsWith("Clear_At")))
+				{
+					Predicate<Position2D> ps=p;
+					Predicate<Position2D> prs=pr;
+					System.out.println();
+				}
+				boolean cont=contradicts(p, pr);
+				return cont;
+			});
+			kb.add(p);
 		});
+//		effects.getComponents().forEach((pre)->);
 	}
 
 }

@@ -40,14 +40,5 @@ public abstract class Predicate<T> extends StripsItem<T> {
 	public String toString() {
 		return "Type: "+this.getClass().getSimpleName()+"\nName: "+this.name+"\nData: "+data.toString();
 	}
-	@Override
-	public boolean equals(Object obj) {
-		if(obj instanceof Predicate)
-		{
-			@SuppressWarnings("unchecked")
-			Predicate<T> pred=(Predicate<T>) obj;
-			return (this.data.equals(pred.data) && this.name.equals(pred.name));
-		}
-		return false;
-	}
+	
 }

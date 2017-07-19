@@ -34,4 +34,6 @@ public class AndPredicate<T> extends ComplexPredicate<T> {
 		}
 		return "** 'And'"+this.name+", preds:"+sb.toString();
 	}
+	
+	
 }

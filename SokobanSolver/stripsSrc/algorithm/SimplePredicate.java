@@ -20,7 +20,10 @@ public class SimplePredicate<T> extends Predicate<T> {
 	public boolean equals(Object obj) {
 		if(obj instanceof SimplePredicate)
 		{
-			return (this.data.equals(((SimplePredicate<T>)obj).data) && this.name.equals(((SimplePredicate<T>)obj).name));
+			SimplePredicate<T> predObj=(SimplePredicate<T>)obj;
+			boolean dataEQ=data.equals(predObj.data);
+			boolean nameEQ= name.equals(predObj.name);
+			return ( dataEQ && nameEQ );
 		}
 		return false;
 	}
