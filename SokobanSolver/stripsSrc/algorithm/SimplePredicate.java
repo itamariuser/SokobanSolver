@@ -15,6 +15,10 @@ public class SimplePredicate<T> extends Predicate<T> {
 		this.data=other.data;
 	}
 	
+	public SimplePredicate(Predicate<T> other) {
+		super(other.name,other.data);
+	}
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean equals(Object obj) {

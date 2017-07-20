@@ -5,7 +5,10 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.PriorityQueue;
+
+import model.data.Position2D;
 
 public class BestFirstSearcher<T> extends CommonSearcher<T> {
 	
@@ -19,7 +22,7 @@ public class BestFirstSearcher<T> extends CommonSearcher<T> {
 		 openList=new PriorityQueue<>(new Comparator<State<T>>() {
 			@Override
 			public int compare(State<T> arg0, State<T> arg1) {
-				if(getEqualData(distances, arg0)==null)
+				if(distances.get(arg0)==null)
 				{
 					System.out.println();
 				}
@@ -42,6 +45,10 @@ public class BestFirstSearcher<T> extends CommonSearcher<T> {
 	}
 	private Integer getEqualData(HashMap<State<T>,Integer> map,State<T> state)
 	{
+		if(state.getLayout().equals(new Position2D(1,2)))
+		{
+			System.out.println();
+		}
 		for (State<T> s1 : map.keySet()) {
 			if(s1.getLayout().equals(state.getLayout())){
 				return map.get(state);
@@ -80,17 +87,28 @@ public class BestFirstSearcher<T> extends CommonSearcher<T> {
 							distances.put(tempState, Integer.MAX_VALUE);
 							openList.add(tempState);
 						}
-						else if(getEqualData(distances, tempState)> getEqualData(distances, state) + tempState.getCostFromParent())//if the new path to tempState is better than the previous path to tempState
+						//else if(getEqualData(distances, tempState)> getEqualData(distances, state) + tempState.getCostFromParent())//if the new path to tempState is better than the previous path to tempState
+						else 
 						{
-							if(!openList.contains(tempState))
+							if(distances.get(tempState)==null)
 							{
-								openList.add(tempState);
+								distances.put(tempState,Integer.MAX_VALUE);
 							}
-							else
+							int d1=distances.get(tempState);
+							int d2=distances.get(state);
+							int d3=tempState.getCostFromParent();
+							if(d1>d2+d3)
 							{
-								openList.remove(tempState);
-								distances.put(tempState, distances.get(state)+tempState.getCostFromParent());
-								openList.add(tempState);
+								if(!openList.contains(tempState))
+								{
+									openList.add(tempState);
+								}
+								else
+								{
+									openList.remove(tempState);
+									distances.put(tempState, distances.get(state)+tempState.getCostFromParent());
+									openList.add(tempState);
+								}
 							}
 						}
 					}

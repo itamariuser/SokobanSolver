@@ -32,8 +32,7 @@ public class AndPredicate<T> extends ComplexPredicate<T> {
 		for (Predicate<T> predicate : components) {
 			sb.append("\n"+predicate.toString()+"\n");
 		}
-		return "** 'And'"+this.name+", preds:"+sb.toString();
+		return "AND:\n"+sb.toString();
 	}
-	
 	
 }

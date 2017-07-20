@@ -2,6 +2,8 @@ package algorithm;
 
 import java.util.ArrayList;
 
+import model.data.Position2D;
+
 public class Action<T> extends StripsItem<T> {
 	
 
@@ -23,10 +25,39 @@ public class Action<T> extends StripsItem<T> {
 	public AndPredicate<T> getEffects() {
 		return effects;
 	}
-
+	
+	public void addEffect(SimplePredicate<T> effect)
+	{
+		if(this.effects==null)
+		{
+			this.effects=new AndPredicate<>();
+		}
+		this.effects.add(effect);
+	}
+	
+	
+	public void addPrecondition(SimplePredicate<T> prec)
+	{
+		if(this.preconditions==null)
+		{
+			this.preconditions=new AndPredicate<>();
+		}
+		this.preconditions.add(prec);
+	}
 
 	public void setEffects(AndPredicate<T> effects) {
 		this.effects = effects;
+	}
+	
+	public void setPreconditions(SimplePredicate<T> precondition) {
+		AndPredicate<T> and=new AndPredicate<>(precondition);
+		this.preconditions=and;
+	}
+	
+	
+	public void setEffects(SimplePredicate<T> effect) {
+		AndPredicate<T> and=new AndPredicate<>(effect);
+		this.effects=and;
 	}
 
 

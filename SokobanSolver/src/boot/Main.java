@@ -2,15 +2,11 @@ package boot;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
 
-import algorithm.Action;
-import algorithm.Plan;
 import algorithm.Strips;
 import commons.Level2D;
-import data.BestFirstSearcher;
-import model.data.LevelLoader;
 import model.data.Position2D;
 import model.data.TextLevel2DLoader;
 import model.policy.MySokobanPolicy;
@@ -93,10 +89,16 @@ public class Main {
 //		fus.flush();	
 
 		TextLevel2DLoader loader=new TextLevel2DLoader();
-		Level2D level=(Level2D) loader.loadLevelFromStream(new FileInputStream(new File("E:/Prog/Java/git/solva/SokobanSolver/SokobanSolver/levels/level 1.txt")));
-		LevelPlannable p=new LevelPlannable(level, new MySokobanPolicy(level));
+		Level2D level=(Level2D) loader.loadLevelFromStream(new FileInputStream(new File("E:/Prog/Java/git/solva/SokobanSolver/SokobanSolver/levels/level 2.txt")));
+		LevelPlannable p=new LevelPlannable(level);
 		
 		Strips<Position2D> strips=new Strips<>();
 		strips.plan(p);
+		
+		SokobanSolver ss=new SokobanSolver();
+		List<String> sol=ss.solveLevel(level);
+		for (String string : sol) {
+			System.out.println(string);
+		}
 	}
 }

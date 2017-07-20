@@ -49,6 +49,9 @@ public class State<T> {
 		return layout.toString();
 	}
 
-
+	@Override
+	public int hashCode() {
+		return layout.hashCode()+ costFromParent*17;
+	}
 	
 }
