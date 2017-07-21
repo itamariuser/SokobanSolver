@@ -81,4 +81,15 @@ public class Action<T> extends StripsItem<T> {
 		this.effects=effects;
 		this.name=name;
 	}
+
+
+	public void addEffect(AndPredicate<T> effects2) {
+		if(this.effects==null)
+		{
+			this.effects=new AndPredicate<>();
+		}
+		for (Predicate<T> p : effects2.getComponents()) {
+			this.effects.add(p);
+		}
+	}
 }

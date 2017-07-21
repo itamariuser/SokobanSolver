@@ -1,19 +1,17 @@
 package algorithm;
 
-import java.util.LinkedList;
-
-import model.data.Position2D;
+import java.util.ArrayList;
 //For consecutive actions
 public class LinkAction<T> extends Action<T>{
-	LinkedList<Action<T>> actions;
+	ArrayList<Action<T>> actions;
 	public LinkAction(String name) {
 		super(name);
-		actions=new LinkedList<Action<T>>();
+		actions=new ArrayList<Action<T>>();
 	}
-	public LinkedList<Action<T>> getActions() {
+	public ArrayList<Action<T>> getActions() {
 		return actions;
 	}
-	public void setActions(LinkedList<Action<T>> actions) {
+	public void setActions(ArrayList<Action<T>> actions) {
 		this.actions = actions;
 	}
 	

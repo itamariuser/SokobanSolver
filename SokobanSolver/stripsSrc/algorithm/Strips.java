@@ -10,7 +10,7 @@ public class Strips<T> implements Planner<T> {
 		Plan<T> plan=new Plan<>();
 		Stack<StripsItem<T>> stack=new Stack<>();
 		stack.push(plannable.getGoal());
-		while(!stack.isEmpty())
+ 		while(!stack.isEmpty())
 		{
 			StripsItem<T> top=stack.peek();
 			if(top instanceof AndPredicate)

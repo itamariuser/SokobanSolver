@@ -89,7 +89,7 @@ public class Main {
 //		fus.flush();	
 
 		TextLevel2DLoader loader=new TextLevel2DLoader();
-		Level2D level=(Level2D) loader.loadLevelFromStream(new FileInputStream(new File("E:/Prog/Java/git/solva/SokobanSolver/SokobanSolver/levels/level 2.txt")));
+		Level2D level=(Level2D) loader.loadLevelFromStream(new FileInputStream(new File("E:/Prog/Java/git/solva/SokobanSolver/SokobanSolver/levels/level 4.txt")));
 		LevelPlannable p=new LevelPlannable(level);
 		
 		Strips<Position2D> strips=new Strips<>();

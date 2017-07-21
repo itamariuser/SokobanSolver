@@ -80,6 +80,11 @@ public class LevelPlannable implements Plannable<Position2D> {
 		action.addPrecondition(new SimplePredicate<Position2D>("MainCharacter_At", beforeActionPos));
 		action.addEffect(new SimplePredicate<Position2D>("MainCharacter_At", afterActionPos));
 		action.addEffect(new SimplePredicate<Position2D>("Clear_At", beforeActionPos));
+		
+		if(afterActionPos.equals(new Position2D(4,3)))
+		{
+			System.out.println();
+		}
 	}
 	
 	/**
@@ -90,6 +95,13 @@ public class LevelPlannable implements Plannable<Position2D> {
 	 */
 	float difFromKB(Action<Position2D> action)
 	{
+		for (Predicate<Position2D> p : action.getEffects().getComponents()) {
+			if(p.getData().equals(new Position2D(2,1)) && p.getName().startsWith("Crate_At"))
+			{
+				System.out.println();
+			}
+		}
+		
 		float cost=0f;
 		for (Predicate<Position2D> predicate : action.getPreconditions().getComponents()) {
 			String predName=predicate.getName();
@@ -97,7 +109,7 @@ public class LevelPlannable implements Plannable<Position2D> {
 			float importanceMultiplier=0.0f;
 			if(predName.startsWith("Clear_At")) importanceMultiplier=1.2f;
 			else if(predName.startsWith("MainCharacter_At")) importanceMultiplier=1.0f;
-			else if(predName.startsWith("Crate_At")) importanceMultiplier=1.5f;
+			else if(predName.startsWith("Crate_At")) importanceMultiplier=10f;
 			else if(predName.startsWith("Wall_At")) importanceMultiplier=9999.0f;
 			
 			float minDist=Float.MAX_VALUE;
@@ -212,12 +224,13 @@ public class LevelPlannable implements Plannable<Position2D> {
 			}
 			
 			LinkAction<Position2D> linkAction=new LinkAction<>("Move_Path");
-			SimplePredicate<Position2D> effect=new SimplePredicate<Position2D>(target);
-			linkAction.setEffects(effect);
+			SimplePredicate<Position2D> effect1=new SimplePredicate<Position2D>(target);
+			linkAction.setEffects(effect1);
+			
 			SimplePredicate<Position2D> precondition=new SimplePredicate<Position2D>("MainCharacter_At", searchable.getInitialState().getLayout());
 			linkAction.setPreconditions(precondition);
 			
-			LinkedList<Action<Position2D>> lActions=new LinkedList<>();
+			ArrayList<Action<Position2D>> lActions=new ArrayList<>();
 			ArrayList<State<Position2D>> path=sol.getPathToVictory();
 			Collections.reverse(path);
 			for (State<Position2D> state : path) {
@@ -248,11 +261,33 @@ public class LevelPlannable implements Plannable<Position2D> {
 					}
 					lActions.add(generatedAct);
 				}
+				else
+				{
+					
+				}
 			}
 			linkAction.setActions(lActions);
 			
-			linkAction.getActions().getFirst().setPreconditions(linkAction.getPreconditions());
-			linkAction.getActions().getLast().setEffects(linkAction.getEffects());
+			linkAction.getActions().get(0).setPreconditions(linkAction.getPreconditions());
+			Action<Position2D> lastAction=linkAction.getActions().get(linkAction.getActions().size()-1);
+			lastAction.setEffects(linkAction.getEffects());
+			if(target.getName().startsWith("MainCharacter_At") && target.getData().equals(new Position2D(3,3)))
+			{
+				System.out.println();
+			}
+			for (Predicate<Position2D> p :lastAction.getPreconditions().getComponents()) {
+				if(p.getName().startsWith("MainCharacter_At"))
+				{
+					lastAction.addEffect(new SimplePredicate<Position2D>("Clear_At",p.getData()));
+				}
+			}
+			for (Predicate<Position2D> p : linkAction.getActions().get(linkAction.getActions().size()-1).getEffects().getComponents()) {
+				if(p.getName().startsWith("MainCharacter_At"))
+				{
+					
+				}
+			}
+			
 			Position2D posToReplace=new Position2D();
 			for (Predicate<Position2D> pred : linkAction.getPreconditions().getComponents()) {
 				if(pred.getName().startsWith("MainCharacter_At"))
@@ -260,7 +295,7 @@ public class LevelPlannable implements Plannable<Position2D> {
 					posToReplace=pred.getData();
 				}
 			}
-			linkAction.getActions().getLast().addEffect(new SimplePredicate<Position2D>("Clear_At", posToReplace));
+			linkAction.getActions().get(linkAction.getActions().size()-1).addEffect(new SimplePredicate<Position2D>("Clear_At", posToReplace));
 			Collections.reverse(linkAction.getActions());
 			ArrayList<Action<Position2D>> actions1=new ArrayList<>();
 			actions1.add(linkAction);
@@ -323,12 +358,11 @@ public class LevelPlannable implements Plannable<Position2D> {
 			}
 			else if(pred.getName().startsWith("MainCharacter_At"))
 			{
-				AndPredicate<Position2D> toReturn=new AndPredicate<>();
 				Action<Position2D> actRight=new Action<>("Move_Right");
 				Action<Position2D> actLeft=new Action<>("Move_Left");
 				Action<Position2D> actDown=new Action<>("Move_Down");
 				Action<Position2D> actUp=new Action<>("Move_Up");
-				
+
 				updateActionMove(actRight, new Position2D(x+1,y), pred.getData());
 				updateActionMove(actLeft, new Position2D(x-1,y), pred.getData());
 				updateActionMove(actDown, new Position2D(x,y+1), pred.getData());
@@ -345,15 +379,13 @@ public class LevelPlannable implements Plannable<Position2D> {
 	
 	private boolean isLegal(Position2D pos)
 	{
-		boolean ret=false;
 		for (Predicate<Position2D> p : kb.getComponents()) {
 			if(p.getName().startsWith("Clear_At") && p.getData().equals(pos))
 			{
-				ret=true;
-				break;
+				return true;
 			}
 		}
-		return ret;
+		return false;
 	}
 	
 	private void updateAction(Action<Position2D> action,Position2D playerPos,Position2D cratePos,Position2D targetPos)
@@ -419,9 +451,10 @@ public class LevelPlannable implements Plannable<Position2D> {
 	@Override
 	public Action<Position2D> getSatisfyingAction(Predicate<Position2D> target) {//HERE
 		
-		Action<Position2D> minAction=getSatisfyingActions(target).get(0);
+		List<Action<Position2D>> actions=getSatisfyingActions(target);
+		Action<Position2D> minAction=actions.get(0);
 		float minCost=difFromKB(minAction);
-		for (Action<Position2D> action : getSatisfyingActions(target)) {
+		for (Action<Position2D> action : actions) {
 			float currCost=difFromKB(action);
 			if(currCost<minCost)
 			{
@@ -487,6 +520,15 @@ public class LevelPlannable implements Plannable<Position2D> {
 					{
 						if(name2.startsWith("Crate_At")) return true;
 						else if(name2.startsWith("MainCharacter_At")) return true;
+					}
+				}
+				else//FCKIN
+				{
+					if(name1.startsWith("MainCharacter_At") &&
+							name2.startsWith("MainCharacter_At") &&
+							!p1.getData().equals(p2.getData()))
+					{
+						return true;
 					}
 				}
 				return false;
@@ -614,7 +656,7 @@ public class LevelPlannable implements Plannable<Position2D> {
 		effects.getComponents().forEach((p) -> {
 			
 			kb.getComponents().removeIf((pr) -> {
-				if(pr.getData().equals(p.getData()) && (pr.getName().startsWith("Clear_At")))
+				if(pr.getName().startsWith("Clear_At") && p.getName().startsWith("MainCha") && p.getData().equals(new Position2D(4,3)))
 				{
 					Predicate<Position2D> ps=p;
 					Predicate<Position2D> prs=pr;
