@@ -45,7 +45,6 @@ public class Dijkstra<T> extends CommonSearcher<T> {
 					{
 						neighborState.setCameFromState(minState);
 						distances.put(neighborState, newDistance);
-						
 					}
 				}
 				else
