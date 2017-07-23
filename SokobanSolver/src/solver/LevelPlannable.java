@@ -13,20 +13,24 @@ import algorithm.LinkAction;
 import algorithm.Plannable;
 import algorithm.Predicate;
 import algorithm.SimplePredicate;
-import commons.Level2D;
+import common.Level2D;
+import common.Position2D;
 import data.BestFirstSearcher;
 import data.GoalNotFoundException;
 import data.Searchable;
 import data.Solution;
 import data.State;
-import model.data.BlankSpace;
-import model.data.Crate;
-import model.data.GameObject;
-import model.data.GoalPoint;
-import model.data.MainCharacter;
-import model.data.Position2D;
-import model.data.Wall;
-
+import gameObjects.BlankSpace;
+import gameObjects.Crate;
+import gameObjects.GameObject;
+import gameObjects.GoalPoint;
+import gameObjects.MainCharacter;
+import gameObjects.Wall;
+/**
+ * An object adapter from level to plannable, for use with a Planner.
+ * @author itamar
+ *
+ */
 public class LevelPlannable implements Plannable<Position2D> {
 	AndPredicate<Position2D> goal;
 	AndPredicate<Position2D> kb;
@@ -35,23 +39,39 @@ public class LevelPlannable implements Plannable<Position2D> {
 		goal=new AndPredicate<Position2D>();
 		kb=new AndPredicate<Position2D>();
 		//generate knowledgebase
-		HashMap<Position2D, ArrayList<GameObject>> layout=lev.getPositionObjectLayout();
-		addPredicates(layout,lev);
+		
+		addPredicates(lev);
 		//generate goal
 		AndPredicate<Position2D> pToReturn = new AndPredicate<Position2D>();
 		lev.getObjReferences().forEach((g)-> { 
 			if(g instanceof GoalPoint) 
-				getPositionsOfObject(g,lev).forEach((p)->pToReturn.add(new SimplePredicate<Position2D>("Crate_At",p)));});
-		goal = pToReturn;
+			{
+				Position2D pos=getPosOf(g, lev);
+				pToReturn.add(new SimplePredicate<Position2D>("Crate_At",pos));
+			}
+			goal = pToReturn;
+		});
 	}
 	
-	private void addPredicates(HashMap<Position2D, ArrayList<GameObject>> layout,Level2D lev)
+	@Override
+	public Predicate<Position2D> getGoal() {
+		return this.goal;
+	}
+	@Override
+	public AndPredicate<Position2D> getKnowledgebase() {
+		return kb;
+	}
+	/**
+	 * Iterate over the game objects of a level, and insert fitting predicates to the knowledge base.
+	 * @param level
+	 */
+	private void addPredicates(Level2D level)
 	{
-
+		HashMap<Position2D, ArrayList<GameObject>> layout=level.getPositionObjectLayout();
 		for (Position2D p : layout.keySet()) {
-			for (GameObject gameObj : lev.getGameObjectArrayOf(p)) {
-				Position2D objPos=getPosOf(gameObj, lev);
-				ArrayList<GameObject> objsAtPos=lev.getGameObjectArrayOf(objPos);
+			for (GameObject gameObj : level.getGameObjectArrayOf(p)) {
+				Position2D objPos=getPosOf(gameObj, level);
+				ArrayList<GameObject> objsAtPos=level.getGameObjectArrayOf(objPos);
 				boolean posBlocked=false;
 				for (GameObject gameObject : objsAtPos) {
 					if(gameObject instanceof Crate || gameObject instanceof MainCharacter || gameObject instanceof Wall)
@@ -65,42 +85,44 @@ public class LevelPlannable implements Plannable<Position2D> {
 				}
 			}
 		}
-		layout.keySet().forEach((p) -> lev.getGameObjectArrayOf(p).forEach((gameObj)->kb.add(generatePredicate(gameObj,lev))));
+		layout.keySet().forEach((p) -> level.getGameObjectArrayOf(p).forEach((gameObj)->kb.add(generatePredicate(gameObj,level))));
 	}
 	
+	/**
+	 * Given a gameObject and a level, generate a fitting predicate.
+	 * @param gameObj - The game object.
+	 * @param level - The level, from which the game object is taken.
+	 * @return A predicate repesenting the game object.
+	 */
 	private Predicate<Position2D> generatePredicate(GameObject gameObj,Level2D level)
 	{
 		return new SimplePredicate<Position2D>(gameObj.getClass().getSimpleName()+"_At",getPosOf(gameObj,level));
 	}
 	
-	
-	void updateAction(Action<Position2D> action,Position2D beforeActionPos,Position2D afterActionPos)
+	/**
+	 * Given a move action, update its effects and preconditions according to a source and target position.
+	 * @param action - The action to update.
+	 * @param srcPos - Position before the action.
+	 * @param destPos - Position after the action.
+	 */
+	private void updateAction(Action<Position2D> action,Position2D srcPos,Position2D destPos)
 	{
-		action.addPrecondition(new SimplePredicate<Position2D>("MainCharacter_At", beforeActionPos));
-		action.addEffect(new SimplePredicate<Position2D>("MainCharacter_At", afterActionPos));
-		action.addEffect(new SimplePredicate<Position2D>("Clear_At", beforeActionPos));
-		
-		if(afterActionPos.equals(new Position2D(4,3)))
+		if(action.getName().startsWith("Move"))
 		{
-			System.out.println();
+			action.addPrecondition(new SimplePredicate<Position2D>("MainCharacter_At", srcPos));
+			action.addEffect(new SimplePredicate<Position2D>("MainCharacter_At", destPos));
+			action.addEffect(new SimplePredicate<Position2D>("Clear_At", srcPos));
 		}
 	}
 	
 	/**
-	 * Determine how different an action is from the current kb
+	 * Determine how different an action is from the current knowledge base.
 	 * 
-	 * @param Action<Position2D> action
-	 * @return float: The difference score, the higher - the more different
+	 * @param action - The evaluated action.
+	 * @return The difference score. Higher is more different.
 	 */
-	float difFromKB(Action<Position2D> action)
+	private float difFromKB(Action<Position2D> action)
 	{
-		for (Predicate<Position2D> p : action.getEffects().getComponents()) {
-			if(p.getData().equals(new Position2D(2,1)) && p.getName().startsWith("Crate_At"))
-			{
-				System.out.println();
-			}
-		}
-		
 		float cost=0f;
 		for (Predicate<Position2D> predicate : action.getPreconditions().getComponents()) {
 			String predName=predicate.getName();
@@ -130,7 +152,12 @@ public class LevelPlannable implements Plannable<Position2D> {
 		}
 		return cost;
 	}
-	
+	/**
+	 * Generate a list of possible actions which satisfy the target predicate.
+	 * 
+	 * @param target - The target predicate.
+	 * @return A list of possible actions which satisfy the target predicate.
+	 */
 	@Override
 	public List<Action<Position2D>> getSatisfyingActions(Predicate<Position2D> target) {
 		ArrayList<Action<Position2D>> actions=new ArrayList<>();
@@ -415,40 +442,28 @@ public class LevelPlannable implements Plannable<Position2D> {
 		action.setEffects(effects);
 	}
 	
-	
-	@Override
-	public Predicate<Position2D> getGoal() {
-		return this.goal;
-	}
-	
-	private ArrayList<Position2D> getPositionsOfObject(GameObject g,Level2D lev)
-	{
-		ArrayList<Position2D> posList=new ArrayList<>();getClass();
-		lev.getPositionObjectLayout().keySet().forEach((pos)->{
-			if(lev.getPositionObjectLayout().get(pos).contains(g))
-			{
-				posList.add(pos);
-			}
-		});
-		return posList;
-	}
-	
+	/**
+	 * Returns the position of a given game object in a given level
+	 * @param obj - The game object to search for.
+	 * @param level - The level.
+	 * @return The object's position in the level.
+	 */
 	private Position2D getPosOf(GameObject obj,Level2D level)
 	{
-		for(Position2D pos : level.getPositionObjectLayout().keySet()) {
-			if(level.getPositionObjectLayout().get(pos).contains(obj)) return pos;
+		for (Position2D pos : level.getPositionObjectLayout().keySet()) {
+			if (level.getPositionObjectLayout().get(pos).contains(obj))
+				return pos;
 		}
 		return null;
 	}
-	
-
+	/**
+	 * Find a single action which satisfies the target predicate.
+	 * This is done using the "difFromKB" function to determine which action is better, so there's a need to change the function according to the algorithm.
+	 * @param target - The target predicate.
+	 * @return An action which satisfies the target predicate.
+	 */
 	@Override
-	public AndPredicate<Position2D> getKnowledgebase() {
-		return kb;
-	}
-
-	@Override
-	public Action<Position2D> getSatisfyingAction(Predicate<Position2D> target) {//HERE
+	public Action<Position2D> getSatisfyingAction(Predicate<Position2D> target) {
 		
 		List<Action<Position2D>> actions=getSatisfyingActions(target);
 		Action<Position2D> minAction=actions.get(0);
@@ -464,14 +479,16 @@ public class LevelPlannable implements Plannable<Position2D> {
 		return minAction;
 	}
 	
+	/**
+	 * Returns whether the left predicate <b>contradicts</b> the right predicate, meaning <b>p1 -> !p2</b>
+	 * This might be changed according to the game rules.
+	 * @param p1 - The left side predicate.
+	 * @param p2 - The right side predicate.
+	 * @return true if p1 contradicts p2, false otherwise.
+	 */
 	@Override
 	public boolean contradicts(Predicate<Position2D> p1, Predicate<Position2D> p2) {//p1 -> ~p2
 		String name1 = p1.getName();
-		
-		if(p2==null)
-		{
-			System.out.println();
-		}
 		String name2 = p2.getName();
 		
 		if(p1 instanceof SimplePredicate)
@@ -521,7 +538,7 @@ public class LevelPlannable implements Plannable<Position2D> {
 						else if(name2.startsWith("MainCharacter_At")) return true;
 					}
 				}
-				else//FCKIN
+				else
 				{
 					if(name1.startsWith("MainCharacter_At") &&
 							name2.startsWith("MainCharacter_At") &&
@@ -538,32 +555,12 @@ public class LevelPlannable implements Plannable<Position2D> {
 			if(p2 instanceof SimplePredicate)
 			{
 				AndPredicate<Position2D> temp=new AndPredicate<Position2D>((AndPredicate<Position2D>)p1);
-				//Optional: if p2 is out of bounds,
-//				int maxY=-1;
-//				int maxX=-1;
 				for (Predicate<Position2D> pred : temp.getComponents()) {
-					//more out of bounds checks
-//					Position2D currentPos=pred.getData();
-//					if(maxY<currentPos.getY()) maxY=currentPos.getY();
-//					if(maxX<currentPos.getX()) maxX=currentPos.getX();
-					if(pred.getName().startsWith("Crate_At"))//&&p2.getName().startsWith("Crate_At"))
-					{
-						if(contradicts(pred,p2)) 
-						{
-							return true;
-						}
-					}
-					else if(contradicts(pred,p2)) 
+					if(contradicts(pred,p2)) 
 					{
 						return true;
 					}
 				}
-				//more out of bounds checks
-//				if(p2.getData().getX()>maxX || p2.getData().getY()>maxY)
-//				{
-//					if(name2.startsWith("Wall_At")) return false;
-//					return true;
-//				}
 				return false;
 				
 			}
@@ -580,6 +577,13 @@ public class LevelPlannable implements Plannable<Position2D> {
 		return false;
 	}
 
+	/**
+	 * Returns whether the left predicate <b>satisfies</b> the right predicate, meaning <b>p1 -> p2</b>
+	 * This might be changed according to the game rules.
+	 * @param p1 - The left side predicate.
+	 * @param p2 - The right side predicate.
+	 * @return true if p1 satisfies p2, false otherwise.
+	 */
 	@Override
 	public boolean satisfies(Predicate<Position2D> p1, Predicate<Position2D> p2) { //if p1 -> p2
 		try {
@@ -639,28 +643,37 @@ public class LevelPlannable implements Plannable<Position2D> {
 		return p1.equals(p2);
 	}
 
-	
+	/**
+	 * Returns whether the knowledge base <B>satisfies</b> a predicate.
+	 * @param p - The predicate to be checked.
+	 * @return true if <B>kb satisfies p</B>, false otherwise.
+	 */
 	@Override
-	public boolean kbSatisfies(Predicate<Position2D> p2) {
-		return satisfies(kb, p2);
+	public boolean kbSatisfies(Predicate<Position2D> p) {
+		return satisfies(kb, p);
 	}
+	
+	/**
+	 * Returns whether the knowledge base <B>contradicts</b> a predicate.
+	 * @param p - The predicate to be checked.
+	 * @return true if <B>kb contradicts p</B>, false otherwise.
+	 */
 	@Override
 	public boolean kbContradicts(Predicate<Position2D> p2)
 	{
 		return contradicts(kb,p2);
 	}
 	
+	/**
+	 * Simulates the execution of effects on the knowledge base.
+	 * The knowledge base will change based on the effects.
+	 * @param effects - The effects to be simulated.
+	 */
 	@Override
 	public void updateKb(AndPredicate<Position2D> effects) {
 		effects.getComponents().forEach((p) -> {
 			
 			kb.getComponents().removeIf((pr) -> {
-				if(pr.getName().startsWith("Clear_At") && p.getName().startsWith("MainCha") && p.getData().equals(new Position2D(4,3)))
-				{
-					Predicate<Position2D> ps=p;
-					Predicate<Position2D> prs=pr;
-					System.out.println();
-				}
 				boolean cont=contradicts(p, pr);
 				return cont;
 			});
