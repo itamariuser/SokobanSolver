@@ -29,7 +29,6 @@ import gameObjects.Wall;
 /**
  * An object adapter from level to plannable, for use with a Planner.
  * @author itamar
- *
  */
 public class LevelPlannable implements Plannable<Position2D> {
 	AndPredicate<Position2D> goal;
