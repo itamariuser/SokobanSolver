@@ -21,7 +21,7 @@ public class Main {
 		TextLevel2DLoader loader=new TextLevel2DLoader();
 		Level2D level=null;
 		try {
-			level = (Level2D) loader.loadLevelFromStream(new FileInputStream(new File("./levels/level 4.txt")));
+			level = (Level2D) loader.loadLevelFromStream(new FileInputStream(new File("./levels/level 5.txt")));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
